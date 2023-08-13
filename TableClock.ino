@@ -14,44 +14,41 @@
 #include "pitches.h"  // ноты, установлена локально в папке проекта
 #include "themes.h" // мелодии, установлена локально в папке проекта
 
-const int8_t DS1307 = 104; // адресс модуля, заложен производителем
-const int8_t BUZZER_PIN = A7; // подключаем пьезодинамик (зумер) на пин A7
+const int8_t DS1307 = 104; // адрес модуля, заложен производителем
+const int8_t BUZZER_PIN = A0; // подключаем пьезодинамик (зумер) на пин A7
 const int8_t BTN_PIN = 2; // подключаем кнопку на пин D2
 const int btnRetention = 3000; // время удержания кнопки
 const int8_t DsSensor_PIN = 6; // подключаем цифровой датчик температуры DS18B20 на пин D2
-const int UPDATE_TEMPERATURE_TIME = 10000; // частота обновления температуры
-const int CYCLE_TIME = 200; // искуствеено замедляем работу, время одного цикла
-const bool ENABLE_ALARM = LOW; // включение будильника
+const int UPDATE_TEMPERATURE_TIME = 10000; // период обновления температуры
+const int CYCLE_TIME = 200; // искуственно замедляем работу, время одного цикла
+const bool ENABLE_ALARM = HIGH; // включение будильника
 
 OneWire DsTemp(DsSensor_PIN); // создаём объект класса OneWire, подключаем датчик температуры на пин D6
-TM1637 Disp(5, 4); // создаём объект класса TM1637, 5 - CLK, 4 - DIO
+TM1637 Disp(5, 4); // создаём объект класса TM1637, подключаем дисплей на пин D5 - CLK, D4 - DIO
 
 const byte brightNight = 0; // яркость дисплея ночью
 const byte brightDay = 4; // яркость дисплея днём
 const uint8_t hourNight = 22; // час перехода на ночной режим
 const uint8_t hourDay = 7; // час перехода на дневной режим
-const uint8_t hourAlarmWeekday = 20; // час включения будильника в будни
-const uint8_t minuteAlarmWeekday = 30; // минута включения будильника в будни
+const uint8_t hourAlarmWeekday = 6; // час включения будильника в будни
+const uint8_t minuteAlarmWeekday = 50; // минута включения будильника в будни
 const uint8_t hourAlarmWeekend = 9; // час включения будильника в выходной
 const uint8_t minuteAlarmWeekend = 0; // минута включения будильника в выходной
 
 const uint16_t timeClock = 10000; // длительность отображения времени
 const uint16_t timeDate = 2000; // длительность отображения даты
 const uint16_t timeTemp = 2000; // длительность отображения температуры
-const uint16_t timeAlarm = 60000; // длительность работы будильника
 
 unsigned long btnTimer = 0; // системное время изменения состояния кнопки
 unsigned long workTime = 0; // время работы ардуины с момента включения
 unsigned long lastUpdateTemperature = 0; // время последнего обновления температуры
-unsigned long alarmStartTime = 0; // время включения будильника (системный таймер)
 unsigned long lastCycleTime = 0; // время одного цикла
 
 DateTime currentDateTime; // текущее время
-//DateTime alarmWeekdayTime; // будильник буднего дня
-//DateTime alarmWeekend; // будильник выходного дня
 
 bool btnFlag = false; // флаг состояния кнопки
 bool btnState = false; // состояние кнопки
+
 byte indicationMode = 0; // режим индикации (0 - время, 1 - дата, 2 - температура)
 uint8_t Bright = 0; // текущая яркость
 float temperature = 25.0; // текущая температура
@@ -127,18 +124,16 @@ void loop() {
   if (ENABLE_ALARM) {
     if (currentDateTime.Day >= 1 and currentDateTime.Day <= 5) {
       if (currentDateTime.Hour == hourAlarmWeekday and currentDateTime.Minute == minuteAlarmWeekday and currentDateTime.Second == 0) {
-      alarmStartTime = millis();
+      Disp.setBright(7);
+      Alarm(); 
+      Disp.succes(currentDateTime.Hour, currentDateTime.Minute);
+      }
+    }
+    else if (currentDateTime.Hour == hourAlarmWeekend and currentDateTime.Minute == minuteAlarmWeekend and currentDateTime.Second == 0) {
       Disp.setBright(7);
       Alarm(); 
       Disp.succes(currentDateTime.Hour, currentDateTime.Minute);
     }
-  }
-  else if (currentDateTime.Hour == hourAlarmWeekend and currentDateTime.Minute == minuteAlarmWeekend and currentDateTime.Second == 0) {
-    alarmStartTime = millis();
-    Disp.setBright(7);
-    Alarm(); 
-    Disp.succes(currentDateTime.Hour, currentDateTime.Minute);
-  }
   }
   
   // смена режимов индикации в соответствии с заданным временем отображения каждого режима
@@ -173,14 +168,15 @@ void loop() {
 // установка яркости
 void SetBright(TM1637 Disp){
     if (currentDateTime.Hour >= hourNight or currentDateTime.Hour < hourDay) {
-    Disp.setBright(brightNight); // устанавливаем яркость дисплея
-    Bright = brightNight;
-  }
+      Disp.setBright(brightNight); // устанавливаем яркость дисплея
+      Bright = brightNight;
+    }
     else {
       Disp.setBright(brightDay);
       Bright = brightDay;
     }
 }
+
 // смена режима индикации 
 void changeMode() {
   Disp.clearDisp();
@@ -219,24 +215,23 @@ float Temperature(){
   }
 
 void Alarm(){
-  // случайный выбор мелодии
-  switch(0){
+  switch(1){
     case (0):
       Play_Pirates();
       break;
-//    case (1):
-//      Play_CrazyFrog();
-//      break;
-//    case (2):
-//      Play_MarioUW();
-//      break;
-//    case (3):
-//      Play_Titanic();
-//      break;  
+    case (1):
+      Play_CrazyFrog();
+      break;
+    case (2):
+      Play_MarioUW();
+      break;
+    case (3):
+      Play_Titanic();
+      break;  
   }
 }
 
-// обработка нажатия кнопки
+// обработка нажатия кнопки для запуска настроеки времени
 void btnProcessing(byte btn_pin) {
   btnState = !digitalRead(btn_pin);
   // Button press
@@ -251,8 +246,7 @@ void btnProcessing(byte btn_pin) {
     Disp.dispTime(currentDateTime.Hour, currentDateTime.Minute);
     currentDateTime.setDateTimeFromSerial();
     setTimeToDS1307(currentDateTime);
-  }
-  
+  }  
   // Button released
   if (!btnState and btnFlag) {
     btnFlag = false;
@@ -260,80 +254,64 @@ void btnProcessing(byte btn_pin) {
   }
 } 
 
+
 // мелодии будильника
 void Play_Pirates()
 { 
   for (int thisNote = 0; thisNote < (sizeof(Pirates_note)/sizeof(int)); thisNote++) {
-    // моргание дисплея через каждые 5 нот
-    Disp.dispTime(currentDateTime.Hour, currentDateTime.Minute);
-//    if (thisNote % 10 == 0) {
-//      Disp.dispTime(curHour, curMinute);
-//    }
-//    if (thisNote % 10 == 5) {
-//      Disp.clearDisp();
-//    }
+    // моргание дисплея
+    if (thisNote % 2 == 0) Disp.dispTime(currentDateTime.Hour, currentDateTime.Minute);   
+    if (thisNote % 2 == 1) Disp.clearDisp();
+    
     int noteDuration = 1000 / Pirates_duration[thisNote];//convert duration to time delay
     tone(BUZZER_PIN, Pirates_note[thisNote], noteDuration);
     int pauseBetweenNotes = noteDuration * 1.05; //Here 1.05 is tempo, increase to play it slower
-    Disp.clearDisp();
     delay(pauseBetweenNotes);
     noTone(BUZZER_PIN); //stop music 
     }
 }
 
-//void Play_CrazyFrog()
-//{
-//  for (int thisNote = 0; thisNote < (sizeof(CrazyFrog_note)/sizeof(int)); thisNote++) {
-//    // моргание дисплея через каждые 5 нот
-//    if (thisNote % 10 == 0) {
-//      Disp.dispTime(curHour, curMinute);
-//    }
-//    if (thisNote % 10 == 5) {
-//      Disp.clearDisp();
-//    }
-//    int noteDuration = 1000 / CrazyFrog_duration[thisNote]; //convert duration to time delay
-//    tone(BUZZER_PIN, CrazyFrog_note[thisNote], noteDuration);
-// 
-//    int pauseBetweenNotes = noteDuration * 1.30;//Here 1.30 is tempo, decrease to play it faster
-//    delay(pauseBetweenNotes);
-//    noTone(BUZZER_PIN); //stop music 
-//    }
-//}
-//
-//void Play_MarioUW()
-//{
-//    for (int thisNote = 0; thisNote < (sizeof(MarioUW_note)/sizeof(int)); thisNote++) {
-//    // моргание дисплея через каждые 5 нот
-//    if (thisNote % 10 == 0) {
-//      Disp.dispTime(curHour, curMinute);
-//    }
-//    if (thisNote % 10 == 5) {
-//      Disp.clearDisp();
-//    }
-//    int noteDuration = 1000 / MarioUW_duration[thisNote];//convert duration to time delay
-//    tone(BUZZER_PIN, MarioUW_note[thisNote], noteDuration);
-//
-//    int pauseBetweenNotes = noteDuration * 1.80;
-//    delay(pauseBetweenNotes);
-//    noTone(BUZZER_PIN); //stop music 
-//    }
-//}
-//
-//void Play_Titanic()
-//{
-//    for (int thisNote = 0; thisNote < (sizeof(Titanic_note)/sizeof(int)); thisNote++) {
-//    // моргание дисплея через каждые 5 нот
-//    if (thisNote % 10 == 0) {
-//      Disp.dispTime(curHour, curMinute);
-//    }
-//    if (thisNote % 10 == 5) {
-//      Disp.clearDisp();
-//    }
-//    int noteDuration = 1000 / Titanic_duration[thisNote];//convert duration to time delay
-//    tone(BUZZER_PIN, Titanic_note[thisNote], noteDuration);
-//
-//    int pauseBetweenNotes = noteDuration * 2.70;
-//    delay(pauseBetweenNotes);
-//    noTone(BUZZER_PIN); //stop music
-//    }
-//}
+void Play_CrazyFrog()
+{
+  for (int thisNote = 0; thisNote < (sizeof(CrazyFrog_note)/sizeof(int)); thisNote++) {
+    // моргание дисплея
+    if (thisNote % 2 == 0)Disp.dispTime(currentDateTime.Hour, currentDateTime.Minute);    
+    if (thisNote % 2 == 1)Disp.clearDisp();
+    
+    int noteDuration = 1000 / CrazyFrog_duration[thisNote]; //convert duration to time delay
+    tone(BUZZER_PIN, CrazyFrog_note[thisNote], noteDuration); 
+    int pauseBetweenNotes = noteDuration * 1.30;//Here 1.30 is tempo, decrease to play it faster
+    delay(pauseBetweenNotes);
+    noTone(BUZZER_PIN); //stop music 
+    }
+}
+
+void Play_MarioUW()
+{
+    for (int thisNote = 0; thisNote < (sizeof(MarioUW_note)/sizeof(int)); thisNote++) {
+    // моргание дисплея
+    if (thisNote % 2 == 0) Disp.dispTime(currentDateTime.Hour, currentDateTime.Minute);
+    if (thisNote % 2 == 1) Disp.clearDisp();
+    
+    int noteDuration = 1000 / MarioUW_duration[thisNote];//convert duration to time delay
+    tone(BUZZER_PIN, MarioUW_note[thisNote], noteDuration);
+    int pauseBetweenNotes = noteDuration * 1.80;
+    delay(pauseBetweenNotes);
+    noTone(BUZZER_PIN); //stop music 
+    }
+}
+
+void Play_Titanic()
+{
+    for (int thisNote = 0; thisNote < (sizeof(Titanic_note)/sizeof(int)); thisNote++) {
+    // моргание дисплея
+    if (thisNote % 2 == 0) Disp.dispTime(currentDateTime.Hour, currentDateTime.Minute);
+    if (thisNote % 2 == 1) Disp.clearDisp();
+    
+    int noteDuration = 1000 / Titanic_duration[thisNote];//convert duration to time delay
+    tone(BUZZER_PIN, Titanic_note[thisNote], noteDuration);
+    int pauseBetweenNotes = noteDuration * 2.70;
+    delay(pauseBetweenNotes);
+    noTone(BUZZER_PIN); //stop music
+    }
+}
