@@ -5,6 +5,7 @@
     hourAlarmWeekday, minuteAlarmWeekday и hourAlarmWeekend, minuteAlarmWeekend соответственно.
     Яркость дисплея автоматически уменьшается в ночное время, час перехода задаётся константой hourNight и час возвращения hourDay.
     Автор: Вурц Геннадий, 2022 год.
+    https://github.com/VurtsGennadiy/TableClock
 */
 
 #include <Wire.h> // стандартная библиотека для связи с модулем времени по I2C
