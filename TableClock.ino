@@ -21,6 +21,7 @@ const int btnRetention = 3000; // время удержания кнопки
 const int8_t DsSensor_PIN = 6; // подключаем цифровой датчик температуры DS18B20 на пин D2
 const int UPDATE_TEMPERATURE_TIME = 10000; // период обновления температуры
 const bool ENABLE_ALARM = HIGH; // включение будильника
+const int8_t ALARM_MELODY = 1; // мелодия будильника (0 - пираты, 1 - крэйзи фрог, 2 - марио, 3 - титаник)
 
 OneWire DsTemp(DsSensor_PIN); // создаём объект класса OneWire, подключаем датчик температуры на пин D6
 TM1637 Disp(5, 4); // создаём объект класса TM1637, подключаем дисплей на пин D5 - CLK, D4 - DIO
@@ -122,13 +123,13 @@ void loop() {
     if (currentDateTime.Day >= 1 and currentDateTime.Day <= 5) {
       if (currentDateTime.Hour == hourAlarmWeekday and currentDateTime.Minute == minuteAlarmWeekday and currentDateTime.Second == 0) {
       Disp.setBright(7);
-      Alarm(); 
+      Alarm(ALARM_MELODY); 
       Disp.succes(currentDateTime.Hour, currentDateTime.Minute);
       }
     }
     else if (currentDateTime.Hour == hourAlarmWeekend and currentDateTime.Minute == minuteAlarmWeekend and currentDateTime.Second == 0) {
       Disp.setBright(7);
-      Alarm(); 
+      Alarm(ALARM_MELODY); 
       Disp.succes(currentDateTime.Hour, currentDateTime.Minute);
     }
   }
@@ -209,8 +210,8 @@ float Temperature(){
     }
   }
 
-void Alarm(){
-  switch(1){
+void Alarm(int8_t melody){
+  switch(melody){
     case (0):
       Play_Pirates();
       break;
@@ -222,7 +223,7 @@ void Alarm(){
       break;
     case (3):
       Play_Titanic();
-      break;  
+      break;    
   }
 }
 
