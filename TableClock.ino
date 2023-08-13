@@ -20,7 +20,6 @@ const int8_t BTN_PIN = 2; // подключаем кнопку на пин D2
 const int btnRetention = 3000; // время удержания кнопки
 const int8_t DsSensor_PIN = 6; // подключаем цифровой датчик температуры DS18B20 на пин D2
 const int UPDATE_TEMPERATURE_TIME = 10000; // период обновления температуры
-const int CYCLE_TIME = 200; // искуственно замедляем работу, время одного цикла
 const bool ENABLE_ALARM = HIGH; // включение будильника
 
 OneWire DsTemp(DsSensor_PIN); // создаём объект класса OneWire, подключаем датчик температуры на пин D6
@@ -42,7 +41,6 @@ const uint16_t timeTemp = 2000; // длительность отображени
 unsigned long btnTimer = 0; // системное время изменения состояния кнопки
 unsigned long workTime = 0; // время работы ардуины с момента включения
 unsigned long lastUpdateTemperature = 0; // время последнего обновления температуры
-unsigned long lastCycleTime = 0; // время одного цикла
 
 DateTime currentDateTime; // текущее время
 
@@ -114,7 +112,6 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
-  if (millis() - lastCycleTime > CYCLE_TIME){ // 
     SetBright(Disp); // установка яркости
     readTimeFromDS1307(); // обновление времени
     temperature = Temperature(); // обновление температуры
@@ -161,8 +158,6 @@ void loop() {
       Disp.dispTemp(temperature); 
       break; 
   }
-  lastCycleTime = millis();
-}
 }
 
 // установка яркости
